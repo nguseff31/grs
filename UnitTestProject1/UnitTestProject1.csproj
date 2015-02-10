@@ -61,8 +61,12 @@
       <Name>GeomertyNetworkWorker</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="fixtures\" />
+    <None Include="fixtures\test.graphml" />
+    <None Include="fixtures\test_arm.graphml" />
+    <None Include="fixtures\test_arm_fail.graphml" />
+    <None Include="fixtures\test_arm_result.graphml" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
