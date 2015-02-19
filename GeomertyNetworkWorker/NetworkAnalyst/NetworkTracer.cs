@@ -96,7 +96,7 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
         /// <param name="processVertex">(int vertexID) => bool. Если возвращает false, то обход заканчивается и BFS возвращает vertexID </param>
         /// <param name="processAdjacent">(v, a) => bool. Если возвращает false, то вершина a не добавляется в очередь и обход в направлении v->a не идет</param>
         /// <returns>Точка, на которой законечен обход</returns>
-        public int BFSDown(int start, Func<int, bool> processVertex, Func<int,int,bool> processAdjacent) 
+        public int BFSUp(int start, Func<int, bool> processVertex, Func<int,int,bool> processAdjacent) 
         {
             int current = start;
             HashSet<int> visited = new HashSet<int>();
@@ -127,13 +127,13 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
 
             return current;
         }
-        public List<int> searchDownByClassId(int start, int class_id, bool is_continuous = false)
+        public List<int> searchUpByClassId(int start, int class_id, bool is_continuous = false)
         {
             Vertex<CommonJunction> vertex;
             List<int> result = new List<int>();
             vertex = network.getVertexFeature(start);
 
-            int end_point = BFSDown(start, (x) => false,
+            int end_point = BFSUp(start, (x) => false,
                 (v, a) =>
                 {
                     vertex = network.getVertexFeature(a);
@@ -150,13 +150,13 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             return result;
         }
 
-        public List<int> searchDownArmat(int start)
+        public List<int> searchUpArmat(int start)
         {
             Vertex<CommonJunction> vertex;
             List<int> result = new List<int>();
             vertex = network.getVertexFeature(start);
 
-            int end_point = BFSDown(start, (x) => false,
+            int end_point = BFSUp(start, (x) => false,
                 (v, a) =>
                 {
                     vertex = network.getVertexFeature(a);
@@ -176,7 +176,7 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             return result;
         }
 
-        public int BFSUpMultipleSources(int[] sources, Func<int, bool> processVertex, Func<int, int, bool> processAdjacent) 
+        public int BFSDownMultipleSources(int[] sources, Func<int, bool> processVertex, Func<int, int, bool> processAdjacent) 
         {
             if (sources.Length == 0)
                 return -1;
@@ -226,15 +226,15 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             Dictionary<int, Edge<CommonJunction>> edges = new Dictionary<int, Edge<CommonJunction>>(network.Edges.ToDictionary(x => x.id));
            
             //находим задвижки
-            List<int> arm = searchDownArmat(start_vertex);
+            List<int> arm = searchUpArmat(start_vertex);
             //находим грс
-            List<int> grs = searchDownByClassId(start_vertex, GRS_CLASS_ID);
+            List<int> grs = searchUpByClassId(start_vertex, GRS_CLASS_ID);
             HashSet<int> arm_hash = new HashSet<int>(arm);
 
             Vertex<CommonJunction> vertex;
             Edge<CommonJunction> edge;
             //находим участок сети от грс до задвижек
-            BFSUpMultipleSources(grs.ToArray(), 
+            BFSDownMultipleSources(grs.ToArray(), 
                 (x) => 
                 {
                     vertex = network.getVertexFeature(x);
