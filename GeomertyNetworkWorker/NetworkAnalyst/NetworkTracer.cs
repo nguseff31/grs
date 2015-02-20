@@ -125,7 +125,7 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
                 }
             }
 
-            return current;
+            return -1;
         }
         public List<int> searchUpByClassId(int start, int class_id, bool is_continuous = false)
         {
