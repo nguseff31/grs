@@ -44,7 +44,6 @@
     <Compile Include="CommonJunction.cs" />
     <Compile Include="NetworkAnalyst\IDirectedNetwork.cs" />
     <Compile Include="NetworkAnalyst\NetworkTracer.cs" />
-    <Compile Include="NetworkAnalyst\yEdFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

@@ -86,7 +86,7 @@ namespace UnitTestProject1
         [TestCategory("UnitTest")]
         public void testBFSstopsAndReturnTarget()
         {
-            //Ищем источник. должна найтись вершина 6, но не 4 (т.к. перед ней задвижка)
+            //Ищем источник. 
             int grs = DirectedNetworkTracer.BFSUp<int, int>(network, 1,
                 (vid) =>
                 {
@@ -100,6 +100,8 @@ namespace UnitTestProject1
                     //Если vf - задвижка, то дальше не идем
                     return vf.value != ARMAT_CLASS;
                 });
+            //должна найтись вершина 6, но не 4 (т.к. перед ней задвижка)
+            Assert.AreEqual(6, grs);
         }
     }
 }
