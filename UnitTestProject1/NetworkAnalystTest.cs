@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Linq;
 using GeomertyNetworkWorker.NetworkAnalyst;
 using GeomertyNetworkWorker;
 
@@ -61,8 +62,8 @@ namespace UnitTestProject1
         [TestCategory("Functional")]
         public void testArmatAlgInMemory()
         {
-            Dictionary<int, Vertex<CommonJunction>> vs2 = new Dictionary<int, Vertex<CommonJunction>>(vs);
-            Dictionary<int, Edge<CommonJunction>> es2 = new Dictionary<int, Edge<CommonJunction>>(es);
+            Dictionary<int, Vertex<CommonJunction>> vs2 = new Dictionary<int, Vertex<CommonJunction>>(network.Vertexes.ToDictionary((x) => x.id));
+            Dictionary<int, Edge<CommonJunction>> es2 = new Dictionary<int, Edge<CommonJunction>>(network.Edges.ToDictionary((x) => x.id));
             vs2.Remove(1);
             es2.Remove(1);
 
@@ -72,7 +73,7 @@ namespace UnitTestProject1
             result_network.loadFromData(vs2, es2);
             Assert.IsTrue(testArmTask(network, result_network, 2));
         }
-        private bool 
+
         [TestMethod]
         [TestCategory("Functional")]
         public void testArmatAlg()

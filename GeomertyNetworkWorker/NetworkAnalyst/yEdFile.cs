@@ -17,8 +17,8 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             this.symbols_to_classes = symbols_to_classes;
         }
 
-        protected abstract void getJunction(XElement node);
-        protected abstract void getEdgeJunction(XElement node);
+        protected abstract Vertex<TVertex> getJunction(XElement node);
+        protected abstract Edge<TEdge> getEdgeJunction(XElement node);
         public void loadFromXml(string graphml)
         {
             if (this.symbols_to_classes == null)

@@ -50,6 +50,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="BFSTest.cs" />
     <Compile Include="DirectedNetworkTest.cs" />
     <Compile Include="ExampleTest.cs" />
     <Compile Include="NetworkAnalystTest.cs" />

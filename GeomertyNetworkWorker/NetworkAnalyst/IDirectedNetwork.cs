@@ -48,73 +48,38 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
         bool containsEdge(int edgeID);
         bool containsEdge(int fromID, int toID);
     }
-
-    public class yEdDirectedNetwork : yEdFile<CommonJunction, CommonJunction>, IDirectedNetwork<CommonJunction, CommonJunction>
+    public class InMemoryNetowork<TVertex, TEdge> : IDirectedNetwork<TVertex, TEdge>
     {
-        private Dictionary<int, Vertex<CommonJunction>> _vertexes;
-        private Dictionary<int, Edge<CommonJunction>> _edges;
-        private Dictionary<int, HashSet<int>> _g;
+        protected Dictionary<int, Vertex<TVertex>> _vertexes;
+        protected Dictionary<int, Edge<TEdge>> _edges;
+        protected Dictionary<int, HashSet<int>> _g;
 
-        public yEdDirectedNetwork()
+        public InMemoryNetowork()
         {
-            _vertexes = new Dictionary<int, Vertex<CommonJunction>>();
-            _edges = new Dictionary<int, Edge<CommonJunction>>();
+            _vertexes = new Dictionary<int, Vertex<TVertex>>();
+            _edges = new Dictionary<int, Edge<TEdge>>();
             _g = new Dictionary<int, HashSet<int>>();
             
         }
 
-
-
-        public void loadFromData(Dictionary<int, Vertex<CommonJunction>> vertexes, Dictionary<int, Edge<CommonJunction>> edges)
+        public void loadFromData(Dictionary<int, Vertex<TVertex>> vertexes, Dictionary<int, Edge<TEdge>> edges)
         {
             _vertexes = vertexes;
             _edges = edges;
 
-            foreach (Vertex<CommonJunction> vertex in vertexes.Values)
+            foreach (Vertex<TVertex> vertex in vertexes.Values)
             {
                 _g[vertex.id] = new HashSet<int>();
             }
-            foreach (Edge<CommonJunction> edge in edges.Values)
+            foreach (Edge<TEdge> edge in edges.Values)
             {
                 _g[edge.sourceID].Add(edge.id);
                 _g[edge.targetID].Add(edge.id);
             }
         }
 
-        protected override void getJunction(XElement node)
-        {
-            XNamespace nsy = "http://www.yworks.com/xml/graphml";
-
-            int yed_id = int.Parse(node.Attribute("id").Value.Substring(1));
-            int id = int.Parse(node.Descendants(nsy + "NodeLabel").First().Value);
-            yedid_to_id.Add(yed_id, id);
-
-            XElement xml_node = node.Descendants(nsy + "Shape").First();
-
-            string symbol = xml_node.Attribute("type").Value;
-            int classID = 0;
-            if (symbols_to_classes.ContainsKey(symbol))
-                classID = symbols_to_classes[symbol];
-            var vertex = new Vertex<CommonJunction>(id, new CommonJunction(id, classID, "Непонятный параметр"));
-            _vertexes.Add(vertex.id, vertex);
-            _g[vertex.id] = new HashSet<int>();
-        }
-
-        protected override void getEdgeJunction(XElement node)
-        {
-            XNamespace nsy = "http://www.yworks.com/xml/graphml";
-            //int id = int.Parse(node.Attribute("id").Value.Substring(1));
-            int id = int.Parse(node.Descendants(nsy + "EdgeLabel").First().Value);
-            int sourceYedID = int.Parse(node.Attribute("source").Value.Substring(1));
-            int targetYedID = int.Parse(node.Attribute("target").Value.Substring(1));
-
-            var edge = new Edge<CommonJunction>(id, yedid_to_id[sourceYedID], yedid_to_id[targetYedID], new CommonJunction());
-            _edges.Add(edge.id, edge);
-            _g[edge.sourceID].Add(edge.id);
-            _g[edge.targetID].Add(edge.id);
-        }
-
-        public IEnumerable<Vertex<CommonJunction>> Vertexes
+        
+        public IEnumerable<Vertex<TVertex>> Vertexes
         {
             get 
             {
@@ -122,7 +87,7 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             }
         }
 
-        public IEnumerable<Edge<CommonJunction>> Edges
+        public IEnumerable<Edge<TEdge>> Edges
         {
             get 
             {
@@ -156,16 +121,16 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             }
         }
 
-        public Vertex<CommonJunction> getVertexFeature(int vertexID)
+        public Vertex<TVertex> getVertexFeature(int vertexID)
         {
             return _vertexes[vertexID];
         }
 
-        public Edge<CommonJunction> getEdgeFeature(int edgeID)
+        public Edge<TEdge> getEdgeFeature(int edgeID)
         {
             return _edges[edgeID];
         }
-        public Edge<CommonJunction> getEdgeFeature(int fromID, int toID)
+        public Edge<TEdge> getEdgeFeature(int fromID, int toID)
         {
             foreach (int edgeID in _g[fromID])
             {
@@ -188,7 +153,7 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
         {
             foreach (int edgeID in _g[fromID])
             {
-                Edge<CommonJunction> edge = _edges[edgeID];
+                Edge<TEdge> edge = _edges[edgeID];
                 if (edge.sourceID == fromID && edge.targetID == toID)
                 {
                     return true;
@@ -196,5 +161,77 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             }
             return false;
         }
+    }
+   
+    public class yEdDirectedNetwork : 
+        InMemoryNetowork<CommonJunction, CommonJunction>
+    {
+        protected Dictionary<string, int> symbols_to_classes;
+        protected Dictionary<int, int> yedid_to_id;
+
+        public yEdDirectedNetwork()
+            : base()
+        {
+
+        }
+        //injecting symbols for loadFromXml
+        public void setSymbols(Dictionary<string, int> symbols_to_classes)
+        {
+            this.symbols_to_classes = symbols_to_classes;
+        }
+
+        protected void getJunction(XElement node)
+        {
+            XNamespace nsy = "http://www.yworks.com/xml/graphml";
+
+            int yed_id = int.Parse(node.Attribute("id").Value.Substring(1));
+            int id = int.Parse(node.Descendants(nsy + "NodeLabel").First().Value);
+            yedid_to_id.Add(yed_id, id);
+
+            XElement xml_node = node.Descendants(nsy + "Shape").First();
+
+            string symbol = xml_node.Attribute("type").Value;
+            int classID = 0;
+            if (symbols_to_classes.ContainsKey(symbol))
+                classID = symbols_to_classes[symbol];
+            var vertex = new Vertex<CommonJunction>(id, new CommonJunction(id, classID, "Непонятный параметр"));
+            _vertexes.Add(vertex.id, vertex);
+            _g[vertex.id] = new HashSet<int>();
+        }
+
+        protected void getEdgeJunction(XElement node)
+        {
+            XNamespace nsy = "http://www.yworks.com/xml/graphml";
+            //int id = int.Parse(node.Attribute("id").Value.Substring(1));
+            int id = int.Parse(node.Descendants(nsy + "EdgeLabel").First().Value);
+            int sourceYedID = int.Parse(node.Attribute("source").Value.Substring(1));
+            int targetYedID = int.Parse(node.Attribute("target").Value.Substring(1));
+
+            var edge = new Edge<CommonJunction>(id, yedid_to_id[sourceYedID], yedid_to_id[targetYedID], new CommonJunction());
+            _edges.Add(edge.id, edge);
+            _g[edge.sourceID].Add(edge.id);
+            _g[edge.targetID].Add(edge.id);
+        }
+        public void loadFromXml(string graphml)
+        {
+            if (this.symbols_to_classes == null)
+            {
+                this.symbols_to_classes = new Dictionary<string, int>();
+            }
+            yedid_to_id = new Dictionary<int, int>();
+            XDocument doc = XDocument.Parse(graphml);
+            XNamespace ns = "http://graphml.graphdrawing.org/xmlns";
+
+            foreach (XElement node in doc.Descendants(ns + "node"))
+            {
+                getJunction(node);
+            }
+
+            foreach (XElement node in doc.Descendants(ns + "edge"))
+            {
+                getEdgeJunction(node);
+            }
+        }
+
     }
 }
