@@ -96,7 +96,7 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
         /// <param name="processVertex">(int vertexID) => bool. Если возвращает false, то обход заканчивается и BFS возвращает vertexID </param>
         /// <param name="processAdjacent">(v, a) => bool. Если возвращает false, то вершина a не добавляется в очередь и обход в направлении v->a не идет</param>
         /// <returns>Точка, на которой законечен обход</returns>
-        public int BFSUp(int start, Func<int, bool> processVertex, Func<int,int,bool> processAdjacent) 
+        public static int BFSUp<TVertex, TEdge>(IDirectedNetwork<TVertex, TEdge> network, int start, Func<int, bool> processVertex, Func<int,int,bool> processAdjacent) 
         {
             int current = start;
             HashSet<int> visited = new HashSet<int>();
@@ -133,7 +133,7 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             List<int> result = new List<int>();
             vertex = network.getVertexFeature(start);
 
-            int end_point = BFSUp(start, (x) => false,
+            int end_point = BFSUp<CommonJunction, CommonJunction>(network, start, (x) => false,
                 (v, a) =>
                 {
                     vertex = network.getVertexFeature(a);
@@ -156,7 +156,7 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             List<int> result = new List<int>();
             vertex = network.getVertexFeature(start);
 
-            int end_point = BFSUp(start, (x) => false,
+            int end_point = BFSUp<CommonJunction, CommonJunction>(network, start, (x) => false,
                 (v, a) =>
                 {
                     vertex = network.getVertexFeature(a);
@@ -176,7 +176,7 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
             return result;
         }
 
-        public int BFSDownMultipleSources(int[] sources, Func<int, bool> processVertex, Func<int, int, bool> processAdjacent) 
+        public static int BFSDownMultipleSources<TVertex, TEdge>(IDirectedNetwork<TVertex, TEdge> network, int[] sources, Func<int, bool> processVertex, Func<int, int, bool> processAdjacent) 
         {
             if (sources.Length == 0)
                 return -1;
@@ -217,33 +217,36 @@ namespace GeomertyNetworkWorker.NetworkAnalyst
 
         public ArmatSearchResult armTask(int edgeID)
         {
-            //Создаем 
+            //Алгоритм не будет изменять существующую сеть, вместо этого будем изменять копию - new_net
             yEdDirectedNetwork new_net = new yEdDirectedNetwork();
-
             int start_vertex =  network.getEdgeFeature(edgeID).targetID;
             
             Dictionary<int, Vertex<CommonJunction>> vertexes = new Dictionary<int, Vertex<CommonJunction>>(network.Vertexes.ToDictionary(x => x.id));
             Dictionary<int, Edge<CommonJunction>> edges = new Dictionary<int, Edge<CommonJunction>>(network.Edges.ToDictionary(x => x.id));
            
-            //находим задвижки
+            //Пункты 1, 2. Делаем обход и находим ближайшие задвижки
             List<int> arm = searchUpArmat(start_vertex);
-            //находим грс
+            
+            //Пункт 3. находим источники
             List<int> grs = searchUpByClassId(start_vertex, GRS_CLASS_ID);
-            HashSet<int> arm_hash = new HashSet<int>(arm);
+            
 
             Vertex<CommonJunction> vertex;
             Edge<CommonJunction> edge;
-            //находим участок сети от грс до задвижек
-            BFSDownMultipleSources(grs.ToArray(), 
+            //Пункты 4. Закрываем задвижки, начиаем обход вниз от источников
+            HashSet<int> arm_hash = new HashSet<int>(arm);
+            BFSDownMultipleSources<CommonJunction, CommonJunction>(network, grs.ToArray(), 
                 (x) => 
                 {
                     vertex = network.getVertexFeature(x);
+                    //Пункт 5. Удаляем узлы
                     vertexes.Remove(x);
                     return false;
                 },
                 (v, a) => 
                 {
                     edge = network.getEdgeFeature(v, a);
+                    //Пункт 5. Удаляем ребра
                     edges.Remove(edge.id);
                     if (arm_hash.Contains(a))
                         return false;
